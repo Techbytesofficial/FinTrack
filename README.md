@@ -71,6 +71,19 @@ FinTrack/
 └── requirements.txt        # Project dependencies
 ```
 
+## 🚀 Deployment
+
+### Deploying to Vercel
+
+This project is optimized for deployment on [Vercel](https://vercel.com).
+
+1. **Import the Project**: Connect your GitHub account and import this repository.
+2. **Setup Database**: 
+   - Go to the **Storage** tab in your Vercel Dashboard.
+   - Create a **Postgres** database.
+   - Connect it to your project.
+3. **Deploy**: Vercel will automatically use the `POSTGRES_URL` to store your data permanently.
+
 ## 📝 License
 
 This project is open-source and available under the [MIT License](LICENSE).
