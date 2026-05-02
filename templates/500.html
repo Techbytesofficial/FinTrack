@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}500 - Server Error - FinTrack{% endblock %}
+
+{% block content %}
+<div class="fade-in" style="text-align: center; padding-top: 10vh;">
+    <h1 class="gradient-text" style="font-size: 6rem; margin-bottom: 1rem;">500</h1>
+    <h2 style="margin-bottom: 1rem;">Server Error</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Something went wrong on our end. We're working on fixing it.</p>
+    <a href="{{ url_for('transactions.dashboard') }}" class="btn btn-primary">
+        Go Back Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FinTrack - Smart Expense Tracking{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass">
+            <h1 class="gradient-text"><i class="fas fa-wallet"></i> <span>FinTrack</span></h1>
+            
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="{{ url_for('transactions.dashboard') }}" class="nav-link {% if request.endpoint == 'transactions.dashboard' %}active{% endif %}">
+                        <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('transactions.view_transactions') }}" class="nav-link {% if request.endpoint == 'transactions.view_transactions' %}active{% endif %}">
+                        <i class="fas fa-list-ul"></i> <span>Transactions</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('reports.view_reports') }}" class="nav-link {% if request.endpoint == 'reports.view_reports' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i> <span>Reports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('transactions.add_transaction') }}" class="nav-link {% if request.endpoint == 'transactions.add_transaction' %}active{% endif %}">
+                        <i class="fas fa-plus-circle"></i> <span>Add New</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div style="margin-top: auto;">
+                <div class="glass" style="padding: 1rem; margin-bottom: 1rem; font-size: 0.8rem;">
+                    <p style="color: var(--text-muted);">Logged in as:</p>
+                    <p style="font-weight: 600;">{{ current_user.username }}</p>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);">
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alerts-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else ('exclamation-circle' if category == 'error' else 'info-circle') }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            document.querySelector('.alerts-container').style.opacity = '0';
+                            setTimeout(() => document.querySelector('.alerts-container').remove(), 500);
+                        }, 4000);
+                    </script>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+        <div class="auth-wrapper">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="alerts-container">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'message' else 'info' }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else ('exclamation-circle' if category == 'error' else 'info-circle') }}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            {% block auth_content %}{% endblock %}
+        </div>
+    {% endif %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

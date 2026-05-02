@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if transaction else 'Add' }} Transaction - FinTrack{% endblock %}
+
+{% block content %}
+<div class="fade-in" style="max-width: 800px; margin: 0 auto;">
+    <header style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.25rem;">{{ 'Edit' if transaction else 'Add New' }} Transaction</h1>
+        <p style="color: var(--text-muted);">Record your {{ 'income or expense' if not transaction else transaction.type }} details</p>
+    </header>
+
+    <div class="glass" style="padding: 2.5rem;">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="type">Transaction Type</label>
+                    <select id="type" name="type" required onchange="updateCategories()">
+                        <option value="expense" {% if transaction and transaction.type == 'expense' %}selected{% endif %}>Expense</option>
+                        <option value="income" {% if transaction and transaction.type == 'income' %}selected{% endif %}>Income</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="amount">Amount ($)</label>
+                    <input type="number" step="0.01" id="amount" name="amount" value="{{ transaction.amount if transaction else '' }}" placeholder="0.00" required>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required onchange="toggleOtherCategory()">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+                
+                <div class="form-group" id="other-category-group" style="display: none;">
+                    <label for="custom_category">Specify Category</label>
+                    <input type="text" id="custom_category" name="custom_category" placeholder="Enter category name">
+                </div>
+
+                <div class="form-group">
+                    <label for="date">Date</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="date" id="date" name="date" value="{{ transaction.date.strftime('%Y-%m-%d') if transaction else now_date }}" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes (Optional)</label>
+                <textarea id="notes" name="notes" rows="3" placeholder="What was this for?">{{ transaction.notes if transaction else '' }}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
+                    <i class="fas fa-check"></i> {{ 'Update' if transaction else 'Save' }} Transaction
+                </button>
+                <a href="{{ url_for('transactions.dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const categoriesIncome = {{ categories_income|tojson }};
+    const categoriesExpense = {{ categories_expense|tojson }};
+    const selectedCategory = "{{ transaction.category if transaction else '' }}";
+
+    function updateCategories() {
+        const type = document.getElementById('type').value;
+        const categorySelect = document.getElementById('category');
+        const categories = type === 'income' ? categoriesIncome : categoriesExpense;
+        
+        categorySelect.innerHTML = '';
+        let isFound = false;
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            if (cat === selectedCategory) {
+                option.selected = true;
+                isFound = true;
+            }
+            categorySelect.appendChild(option);
+        });
+
+        // If category is custom (not in list), select 'Other' and fill the input
+        if (selectedCategory && !isFound) {
+            categorySelect.value = 'Other';
+            document.getElementById('custom_category').value = selectedCategory;
+        }
+
+        toggleOtherCategory();
+    }
+
+    function toggleOtherCategory() {
+        const categorySelect = document.getElementById('category');
+        const otherGroup = document.getElementById('other-category-group');
+        const customInput = document.getElementById('custom_category');
+        
+        if (categorySelect.value === 'Other') {
+            otherGroup.style.display = 'block';
+            customInput.required = true;
+        } else {
+            otherGroup.style.display = 'none';
+            customInput.required = false;
+        }
+    }
+
+    // Initialize categories on load
+    document.addEventListener('DOMContentLoaded', updateCategories);
+</script>
+{% endblock %}

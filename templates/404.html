@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}404 - Not Found - FinTrack{% endblock %}
+
+{% block auth_content %}
+<div class="auth-card glass fade-in" style="text-align: center;">
+    <h1 class="gradient-text" style="font-size: 6rem; margin-bottom: 1rem;">404</h1>
+    <h2 style="margin-bottom: 1rem;">Page Not Found</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">The page you're looking for doesn't exist or has been moved.</p>
+    <a href="{{ url_for('transactions.dashboard') if current_user.is_authenticated else url_for('auth.login') }}" class="btn btn-primary" style="width: 100%;">
+        Go Back Home
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in" style="text-align: center; padding-top: 10vh;">
+    <h1 class="gradient-text" style="font-size: 6rem; margin-bottom: 1rem;">404</h1>
+    <h2 style="margin-bottom: 1rem;">Page Not Found</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">The page you're looking for doesn't exist or has been moved.</p>
+    <a href="{{ url_for('transactions.dashboard') }}" class="btn btn-primary">
+        Go Back Dashboard
+    </a>
+</div>
+{% endblock %}

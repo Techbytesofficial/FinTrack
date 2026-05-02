@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FinTrack{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <header style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <div>
+            <h1 style="font-size: 2.25rem;">Financial Overview</h1>
+            <p style="color: var(--text-muted);">Welcome back, {{ current_user.username }}!</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <form action="{{ url_for('transactions.dashboard') }}" method="GET" id="filterForm" style="display: flex; align-items: center; gap: 1rem;">
+                <input type="hidden" name="view" id="viewInput" value="{{ view_type }}">
+                <div class="view-toggle">
+                    <button type="button" class="toggle-option {% if view_type == 'month' %}active{% endif %}" onclick="setView('month')">Monthly</button>
+                    <button type="button" class="toggle-option {% if view_type == 'year' %}active{% endif %}" onclick="setView('year')">Yearly</button>
+                </div>
+                
+                <div class="filter-group">
+                {% if view_type == 'month' %}
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="month" name="month" id="month" value="{{ selected_month }}" onchange="document.getElementById('filterForm').submit()" class="filter-control" style="width: 180px; position: relative; z-index: 1;">
+                    </div>
+                {% else %}
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <select name="year" onchange="document.getElementById('filterForm').submit()" class="filter-control" style="width: 140px; position: relative; z-index: 1;">
+                            {% for y in range(2023, 2030) %}
+                            <option value="{{ y }}" {% if selected_year == y %}selected{% endif %}>Year {{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endif %}
+                </div>
+            </form>
+            <a href="{{ url_for('transactions.add_transaction') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Transaction
+            </a>
+        </div>
+    </header>
+
+    <!-- Stat Grid -->
+    <div class="stat-grid">
+        <div class="stat-card glass">
+            <span class="stat-label">Total Balance</span>
+            <div class="stat-value gradient-text">${{ "%.2f"|format(total_balance) }}</div>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Lifetime cumulative balance</p>
+        </div>
+        <div class="stat-card glass">
+            <span class="stat-label" style="color: var(--success);">{{ 'Yearly' if view_type == 'year' else 'Monthly' }} Income</span>
+            <div class="stat-value" style="color: var(--success);">${{ "%.2f"|format(income) }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-arrow-up"></i> For {{ period_label }}</div>
+        </div>
+        <div class="stat-card glass">
+            <span class="stat-label" style="color: var(--danger);">{{ 'Yearly' if view_type == 'year' else 'Monthly' }} Expenses</span>
+            <div class="stat-value" style="color: var(--danger);">${{ "%.2f"|format(expense) }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-arrow-down"></i> For {{ period_label }}</div>
+        </div>
+        <div class="stat-card glass">
+            <span class="stat-label" style="color: var(--primary);">{{ 'Yearly' if view_type == 'year' else 'Monthly' }} Savings</span>
+            <div class="stat-value" style="color: var(--primary);">${{ "%.2f"|format(balance) }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Net for {{ period_label }}</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+        <!-- Recent Transactions -->
+        <div class="glass" style="padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="font-size: 1.25rem;">Recent Transactions</h3>
+                <a href="{{ url_for('transactions.view_transactions') }}" style="color: var(--primary); text-decoration: none; font-size: 0.875rem;">View All</a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in recent %}
+                        <tr>
+                            <td>{{ t.date.strftime('%b %d, %Y') }}</td>
+                            <td>{{ t.category }}</td>
+                            <td><span class="badge badge-{{ t.type }}">{{ t.type }}</span></td>
+                            <td class="{% if t.type == 'income' %}text-success{% else %}text-main{% endif %}" style="font-weight: 600;">
+                                {{ '+' if t.type == 'income' else '-' }}${{ "%.2f"|format(t.amount) }}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">No transactions found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Alerts & Budgets -->
+        <div class="glass" style="padding: 1.5rem;">
+            <h3 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Budget Alerts</h3>
+            {% if alerts %}
+                {% for alert in alerts %}
+                <div class="alert alert-{{ 'error' if alert.level == 'danger' else 'info' }}" style="padding: 1rem; border-radius: 12px; margin-bottom: 1rem; flex-direction: column; align-items: flex-start; gap: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px; font-weight: 600;">
+                        <i class="fas fa-{{ 'exclamation-triangle' if alert.status == 'Alert' else 'bell' }}"></i>
+                        {{ alert.status }}: {{ alert.category }}
+                    </div>
+                    <p style="font-size: 0.8rem; opacity: 0.9;">You've spent {{ "%.1f"|format(alert.percent) }}% of your limit.</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                    <p>All budgets are healthy!</p>
+                </div>
+            {% endif %}
+            
+            <a href="{{ url_for('transactions.manage_budget') }}" class="btn btn-secondary" style="width: 100%; margin-top: 1rem;">
+                <i class="fas fa-cog"></i> Manage Budgets
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setView(view) {
+        document.getElementById('viewInput').value = view;
+        document.getElementById('filterForm').submit();
+    }
+</script>
+{% endblock %}
